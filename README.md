@@ -11,6 +11,15 @@ This project is a full-stack web application for monitoring and visualizing eart
 
 ---
 
+## Tech Stack
+
+- **Backend:** Django, Django REST Framework, MySQL / SQLite  
+- **Frontend:** React.js, Leaflet.js, Recharts  
+- **Task Scheduling:** Windows Task Scheduler  
+- **Data Source:** XML feed from National and Kapodistrian University of Athens  
+
+---
+
 ## Features
 
 - Earthquake list with table view and filters.
@@ -161,6 +170,34 @@ While on the project's backend directory run this command:
 python import_excel_data.py
 ```
 
+Excel File Format
+
+The Excel file should contain the following columns in this exact order and with these headers:
+
+| Time                | Latitude | Longitude | Depth | Magnitude |
+| ------------------- | -------- | --------- | ----- | --------- |
+| 24-02-1964 23:30:25 | 38,90    | 23,90     | 10,0  | 5,3       |
+| 11-04-1964 16:00:00 | 39,75    | 25,25     | 10,0  | 5,7       |
+| 21-04-1964 08:14:40 | 38,50    | 22,25     | 10,0  | 4,5       |
+| 24-04-1964 03:49:58 | 38,00    | 21,80     | 10,0  | 5,0       |
+| 29-04-1964 04:21:00 | 39,25    | 23,75     | 10,0  | 5,8       |
+
+**Notes:**
+
+Time format → DD-MM-YYYY HH:MM:SS
+
+Numeric fields are floats with one or two decimals
+
+IMPORT_TIME_ZONE in your .env determines how timestamps are stored
+
+Ensure the file path in .env matches your Excel location
+
+Example:
+
+```bash
+IMPORT_DATA_PATH=./Excel_Data/Greece_earthquakes_history.xlsx
+```
+
 ### 9. Install frontend dependencies
 
 On a new terminal, navigate to the frontend directory and run:
@@ -170,7 +207,7 @@ cd frontend
 npm install
 ```
 
-### 10. Configure .env variables for backend
+### 10. Configure .env variables for frontend
 
 Copy the example .env file and edit the values on the .env file.
 
@@ -267,3 +304,6 @@ Program/script: C:\Path\to\fetch_earthquakes.bat
 Click OK to save, and enter your password if prompted.
 
 The Task Scheduler will now run your data-fetching script automatically at the specified intervals.
+
+## License
+This project is licensed under the MIT License
