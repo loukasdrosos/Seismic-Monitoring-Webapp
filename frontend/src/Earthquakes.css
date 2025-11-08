@@ -13,7 +13,7 @@ body {
   transition: all 0.4s ease-in-out;
 }
 
-/* === Sidebar (drawer style) === */
+/* Sidebar */
 .earthquakes-list {
   position: absolute;
   top: 0;
@@ -213,4 +213,64 @@ body {
   margin: 0;
   font-weight: 600;
 }
+
+/*  Stats Sidebar */
+.earthquakes-stats-sidebar {
+  position: absolute;
+  top: 0;
+  left: 0; 
+  width: 800px;
+  height: 100%;
+  background: white;
+  box-shadow: 4px 0 8px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  transform: translateX(0);
+  transition: transform 0.4s ease-in-out, opacity 0.3s ease-in-out;
+  z-index: 950; 
+}
+
+.earthquakes-layout.stats-closed .earthquakes-stats-sidebar {
+  transform: translateX(-100%); 
+  opacity: 0;
+}
+
+.earthquakes-stats-sidebar > * {
+  transition: opacity 0.3s ease;
+}
+
+.earthquakes-layout.stats-closed .earthquakes-stats-sidebar > * {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.earthquakes-stats-sidebar h2,
+.earthquakes-stats-sidebar h3 {
+  text-align: center;
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+/* Toggle button for stats */
+.toggle-stats-sidebar-button {
+  position: absolute;
+  top: 45px;
+  left: 50px;
+  z-index: 1000;
+  background-color: white;
+  border: 1px solid #aaa;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 14px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.toggle-stats-sidebar-button:hover {
+  background-color: #f0f0f0;
+  border-color: #aaa;
+}
+
 

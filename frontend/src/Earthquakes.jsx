@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";    
+import { useEffect, useState, useRef, use } from "react";    
 import axios from "axios";
 import './Earthquakes.css';
 import IncreaseDecreaseButtons from "./IncreaseDecreaseButtons";
@@ -6,32 +6,48 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import './DatePickerOverrides.css';
 import { enUS } from 'date-fns/locale';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Icon, divIcon, point } from 'leaflet';
 import customMarkerImg from "./image/custom-marker-icon.png";
 import MarkerClusterGroup from "react-leaflet-markercluster";
 import HeatmapLayer from "./HeatmapLayer";
+import { XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, BarChart, Bar } from "recharts";
 
 function Earthquakes() {
+
+    // .env VARIABLES
+    const minimumLatitude = parseFloat(import.meta.env.VITE_MINIMUM_LATITUDE);
+    const maximumLatitude = parseFloat(import.meta.env.VITE_MAXIMUM_LATITUDE);
+    const minimumLongitude = parseFloat(import.meta.env.VITE_MINIMUM_LONGITUDE);
+    const maximumLongitude = parseFloat(import.meta.env.VITE_MAXIMUM_LONGITUDE);
+    const centerLatitude = parseFloat(import.meta.env.VITE_CENTER_LATITUDE);
+    const centerLongitude = parseFloat(import.meta.env.VITE_CENTER_LONGITUDE);
+    const zoomLevel = parseInt(import.meta.env.VITE_DEFAULT_ZOOM_LEVEL);
+    const baseUrl = import.meta.env.VITE_API_URL;    
+    const useStadiaMaps = import.meta.env.VITE_USE_STADIA === 'true';
+    const useStadiaMapsKey = import.meta.env.VITE_USE_STADIA_API_KEY === 'true';
+    const stadiaApiKey = import.meta.env.VITE_STADIA_API_KEY;
 
     const todayObj = new Date();
     const yesterdayObj = new Date(todayObj);
     yesterdayObj.setDate(todayObj.getDate() - 1);
 
     const [earthquakes, setEarthquakes] = useState([]);
+    const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [markerZoom, setMarkerZoom] = useState(true);
     const [sideBarOpen, setSideBarOpen] = useState(true);
+    const [statsSidebarOpen, setStatsSidebarOpen] = useState(false);
 
     // Filter states
     const [minDate, setMinDate] = useState(yesterdayObj);
     const [maxDate, setMaxDate] = useState(todayObj);
-    const [minLatitude, setMinLatitude] = useState(33.51);
-    const [maxLatitude, setMaxLatitude] = useState(42.44);
-    const [minLongitude, setMinLongitude] = useState(18.84);
-    const [maxLongitude, setMaxLongitude] = useState(29.44);
+    const [minLatitude, setMinLatitude] = useState(minimumLatitude);
+    const [maxLatitude, setMaxLatitude] = useState(maximumLatitude);
+    const [minLongitude, setMinLongitude] = useState(minimumLongitude);
+    const [maxLongitude, setMaxLongitude] = useState(maximumLongitude);
     const [minDepth, setMinDepth] = useState(0);
     const [maxDepth, setMaxDepth] = useState(200);
     const [minMagnitude, setMinMagnitude] = useState(0.1);
@@ -55,7 +71,7 @@ function Earthquakes() {
             setLoading(true);
             setError(null);
 
-            let url = `http://127.0.0.1:8000/earthquakes/?`;
+            let url = `${baseUrl}/earthquakes/?`;
             if (minDate) url += `min_date=${minDate}&`;
             if (maxDate) url += `max_date=${maxDate}&`;
             if (minLat) url += `min_latitude=${minLat}&`;
@@ -91,10 +107,51 @@ function Earthquakes() {
         }
     };
 
+    const fetchEarthquakeStats = async (
+    minDate = "",
+    maxDate = "",
+    minLat = "",
+    maxLat = "",
+    minLon = "",
+    maxLon = "",
+    minDepth = "",
+    maxDepth = "",
+    minMag = "",
+    maxMag = "") => {
+    try {
+        let url = `${baseUrl}/earthquakes/stats/?`;
+        if (minDate) url += `min_date=${minDate}&`;
+        if (maxDate) url += `max_date=${maxDate}&`;
+        if (minLat) url += `min_latitude=${minLat}&`;
+        if (maxLat) url += `max_latitude=${maxLat}&`;
+        if (minLon) url += `min_longitude=${minLon}&`;
+        if (maxLon) url += `max_longitude=${maxLon}&`;
+        if (minDepth) url += `min_depth=${minDepth}&`;
+        if (maxDepth) url += `max_depth=${maxDepth}&`;
+        if (minMag) url += `min_magnitude=${minMag}&`;
+        if (maxMag) url += `max_magnitude=${maxMag}&`;
+
+        url = url.slice(0, -1);
+
+        const response = await axios.get(url);
+        setStats(response.data);
+    } catch (error) {
+        console.error("Error fetching stats:", error);
+    }
+};
+
     // Load default (last 24 hours) when the page loads
     useEffect(() => {
         fetchEarthquakes();
+        fetchEarthquakeStats();
     }, []);
+
+    useEffect(() => {
+        if (stats && !stats.has_results) {
+            setStatsSidebarOpen(false);
+        }
+    }, [stats]);
+
 
     // Check explicitly for empty (null, undefined, or empty string) so 0 can be treated as a valid value
     const isEmpty = (v) => v === '' || v === null || v === undefined;
@@ -138,11 +195,22 @@ function Earthquakes() {
             maxDepth,
             minMagnitude,
             maxMagnitude);
+
+        fetchEarthquakeStats(
+            formatDate(minDate),
+            formatDate(maxDate),
+            minLatitude,
+            maxLatitude,
+            minLongitude,
+            maxLongitude,
+            minDepth,
+            maxDepth,
+            minMagnitude,
+            maxMagnitude);
     };
 
-    // Reset button
+    // Reset button, reset all filters to default values, get data from last 24 hours
     const handleReset = () => {
-        // Reset all filters to default values, get data from last 24 hours
         setMinDate(yesterdayObj);
         setMaxDate(todayObj);
         setMinLatitude(33.51);
@@ -155,9 +223,8 @@ function Earthquakes() {
         setMaxMagnitude(8);
         setMarkerZoom(true);
         fetchEarthquakes();
+        fetchEarthquakeStats();
     };
-
-    {/* const stadiaApiKey = process.env.REACT_APP_STADIA_API_KEY; */}
 
     const customMarkerIcon = new Icon({
         iconUrl: customMarkerImg,
@@ -212,10 +279,10 @@ useEffect(() => {
         mapRef.current.invalidateSize();
         }, 450); // matches CSS transition duration
   }
-}, [sideBarOpen]);
+}, [sideBarOpen, statsSidebarOpen]);
 
     return (
-        <div className={`earthquakes-layout ${sideBarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+        <div className={`earthquakes-layout ${sideBarOpen ? 'sidebar-open' : 'sidebar-closed'} ${statsSidebarOpen ? 'stats-open' : 'stats-closed'}`}>
 
             {(loading || error) && (
             <div className="status-overlay">
@@ -411,6 +478,50 @@ useEffect(() => {
                 </div >
             </div>
 
+            {stats?.has_results && (
+            <div className="earthquakes-stats-sidebar">
+                <h2>Earthquake Statistics</h2>
+
+                {stats.filtered_stats.filtered_time_distribution_type && (
+                <>
+                    <h3>
+                    Earthquakes per {stats.filtered_stats.filtered_time_distribution_type}</h3>
+                    <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={stats.filtered_stats.filtered_time_distribution}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="period" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => [value]} cursor={{ fill: 'rgba(0,0,0,0.1)' }} position={{ y: 100 }} />
+                        <Bar dataKey="count" fill="#82ca9d" />
+                    </BarChart>
+                    </ResponsiveContainer>
+
+                    <h3>Average Magnitude per {stats.filtered_stats.filtered_time_distribution_type}</h3>
+                    <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={stats.filtered_stats.filtered_time_distribution}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="period" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => [value]} cursor={{ fill: 'rgba(0,0,0,0.1)' }} position={{ y: 100 }}/>
+                        <Bar dataKey="avg_magnitude" fill="#f0c34c" />
+                    </BarChart>
+                    </ResponsiveContainer>
+
+                    <h3>Maximum Magnitude per {stats.filtered_stats.filtered_time_distribution_type}</h3>
+                    <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={stats.filtered_stats.filtered_time_distribution}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="period" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => [value]} cursor={{ fill: 'rgba(0,0,0,0.1)' }} position={{ y: 100 }} />
+                        <Bar dataKey="max_magnitude" fill="#d84f4f" />
+                    </BarChart>
+                    </ResponsiveContainer>
+                </>
+                )}
+            </div>
+            )}
+
             {/* Right Side: Leaflet Map */}
             <div className="earthquakes-map">
 
@@ -420,31 +531,40 @@ useEffect(() => {
                     {sideBarOpen ? '⮜ Hide Filters' : '⮞ Show Filters'}
                 </button>
 
-                <MapContainer ref={mapRef} center ={[38.0742, 19.8243]} zoom={7} style={{ height: "100%", width: "100%" }}>
+                <button className="toggle-stats-sidebar-button"
+                    onClick={() => {
+                        if (stats?.has_results) setStatsSidebarOpen(!statsSidebarOpen);
+                    }}
+                    disabled={!stats?.has_results} // Disable if no results
+                    title={!stats?.has_results ? "No data to show stats" : ""}
+                >
+                    {statsSidebarOpen ? '⮜ Hide Stats' : '⮞ Show Stats'}
+                </button>
 
-                {/* Localhost tile server - for development only */}
+                <MapContainer ref={mapRef} center ={[centerLatitude, centerLongitude]} zoom={zoomLevel} style={{ height: "100%", width: "100%" }}>
                     
-                    <TileLayer
-                        url="https://tiles.stadiamaps.com/tiles/alidade_satellite/{z}/{x}/{y}{r}.jpg"
-                        attribution="&copy; CNES, Distribution Airbus DS, © Airbus DS, © PlanetObserver (Contains Copernicus Data) | &copy; <a href='https://www.stadiamaps.com/' target='_blank'>Stadia Maps</a> &copy; <a href='https://openmaptiles.org/' target='_blank'>OpenMapTiles</a> &copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
-                    />
-                    
- 
-                {/* Stadia Maps Satellite - Production */}
-                {/*
-                    <TileLayer
-                        url={`https://tiles.stadiamaps.com/tiles/alidade_satellite/{z}/{x}/{y}{r}.jpg?api_key=${stadiaApiKey}`}
-                        attribution="&copy; CNES, Distribution Airbus DS, © Airbus DS, © PlanetObserver (Contains Copernicus Data) | &copy; <a href='https://www.stadiamaps.com/' target='_blank'>Stadia Maps</a> &copy; <a href='https://openmaptiles.org/' target='_blank'>OpenMapTiles</a> &copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
-                    />
-                */}
-
-                {/* OpenStreetMap Standard - Alternative base layer */}
-                {/*
-                    <TileLayer
-                        url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
-                    />
-                */}      
+                    {useStadiaMaps ? (
+                        useStadiaMapsKey ? (
+                            // Stadia Maps Satellite layer with API key (production)
+                            <TileLayer
+                                    url={`https://tiles.stadiamaps.com/tiles/alidade_satellite/{z}/{x}/{y}{r}.jpg?api_key=${stadiaApiKey}`}
+                                    attribution="&copy; CNES, Distribution Airbus DS, © Airbus DS, © PlanetObserver (Contains Copernicus Data) | &copy; <a href='https://www.stadiamaps.com/' target='_blank'>Stadia Maps</a> &copy; <a href='https://openmaptiles.org/' target='_blank'>OpenMapTiles</a> &copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
+                            />
+                        ) : (
+                            // Stadia Maps Satellite layer without API key (development only)
+                            <TileLayer
+                                url="https://tiles.stadiamaps.com/tiles/alidade_satellite/{z}/{x}/{y}{r}.jpg"
+                                attribution="&copy; CNES, Distribution Airbus DS, © Airbus DS, © PlanetObserver (Contains Copernicus Data) | &copy; <a href='https://www.stadiamaps.com/' target='_blank'>Stadia Maps</a> &copy; <a href='https://openmaptiles.org/' target='_blank'>OpenMapTiles</a> &copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
+                            />
+                        )
+      
+                    ) : (
+                        // OpenStreetMap Standard layer
+                       <TileLayer
+                            url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+                            attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
+                        />
+                    )}   
 
                     {earthquakes.length > 25000 ? (
                         <HeatmapLayer points={earthquakes} />

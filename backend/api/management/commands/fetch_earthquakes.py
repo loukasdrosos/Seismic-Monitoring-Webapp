@@ -5,14 +5,21 @@ from api.models import Earthquake # Django model for earthquakes
 from datetime import datetime # Convert string timestamps into DateTimeField
 from django.utils import timezone # Django timezone utilities
 import re # Regular Expressions
+import os
+from dotenv import load_dotenv
 
 class Command(BaseCommand):
     help = "Fetch and parse earthquake data from XML feed"
 
+    # Load environment variables from .env file
+    load_dotenv()
+
     def handle(self, *args, **kwargs):
-        url = "http://www.geophysics.geol.uoa.gr/stations/maps/seismicity.xml"
+        url = os.getenv('DATA_FETCH_URL', '')
         response = requests.get(url)
         root = ET.fromstring(response.content)
+
+        self.stderr.write(f"Data Fetch URL: {url}\n")
 
         for item in root.findall(".//item"):
             desc = item.find("description").text

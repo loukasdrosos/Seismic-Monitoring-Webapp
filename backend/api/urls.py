@@ -1,15 +1,18 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import EarthquakeViewSet
+from .views import EarthquakeViewSet, EarthquakeStatsView
 
 router = DefaultRouter()
 router.register(r'earthquakes', EarthquakeViewSet, basename='earthquake')
 
 urlpatterns = [
+    # Stats endpoint
+    path('earthquakes/stats/', EarthquakeStatsView.as_view(), name='earthquake-stats'),
+    # Earthquake endpoints
     path('', include(router.urls)),
 ]
 
-    # This automatically creates endpoints like:
+    # DefaultRouter automatically creates endpoints for the Earthquake model:
 
     # GET /earthquakes/ → list all earthquakes
 
@@ -19,4 +22,6 @@ urlpatterns = [
 
     # PUT /earthquakes/<id>/ → update an existing one
 
-    # DELETE /earthquakes/<id>/ → delete
+    # DELETE /earthquakes/<id>/ → delete an earthquake
+
+    # The stats endpoint is at /earthquakes/stats/

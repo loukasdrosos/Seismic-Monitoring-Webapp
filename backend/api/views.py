@@ -1,8 +1,11 @@
 from rest_framework import viewsets
-from django.utils import timezone
-from datetime import datetime
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from django.db.models import Avg, Max, Min, Count
+from django.db.models.functions import TruncHour, TruncDay, TruncMonth, TruncYear
 from .models import Earthquake
 from .serializers import EarthquakeSerializer
+from .utils import apply_filters
 
 class EarthquakeViewSet(viewsets.ModelViewSet):
     """
@@ -10,112 +13,123 @@ class EarthquakeViewSet(viewsets.ModelViewSet):
     """
     serializer_class = EarthquakeSerializer
 
+    # Return the queryset with applied filters
     def get_queryset(self):
         queryset = Earthquake.objects.using('default').all()
         params = self.request.query_params
 
-        # Extract query parameters
-        min_date_str = params.get('min_date', None)
-        max_date_str = params.get('max_date', None)
-        min_latitude = params.get('min_latitude', None)
-        max_latitude = params.get('max_latitude', None)
-        min_longitude = params.get('min_longitude', None)
-        max_longitude = params.get('max_longitude', None)
-        min_depth = params.get('min_depth', None)
-        max_depth = params.get('max_depth', None)
-        min_magnitude = params.get('min_magnitude', None)
-        max_magnitude = params.get('max_magnitude', None)
-
-        # Date filter
-        if not min_date_str and not max_date_str:
-            # If no dates are provided, filter by last 24 hours
-            now = timezone.now()
-            past_24h = now - timezone.timedelta(hours=24)
-            queryset = queryset.filter(time__gte=past_24h) 
-        elif min_date_str and max_date_str:
-            try:
-                min_date = datetime.strptime(min_date_str, "%Y-%m-%d")
-                max_date = datetime.strptime(max_date_str, "%Y-%m-%d")
-
-                # Make them timezone-aware because timezone support (USE_TZ=True)
-                min_date = timezone.make_aware(min_date)
-                max_date = timezone.make_aware(max_date)
-
-                if min_date.date() == max_date.date():
-                    queryset = queryset.filter(time__date=min_date.date())
-                else:
-                    queryset = queryset.filter(time__gte=min_date, time__lt=max_date + timezone.timedelta(days=1))
-            except ValueError:
-                # If the date format is incorrect, return an empty queryset
-                return Earthquake.objects.none()
-        else:
-            # If only one date is given do not filter, return full queryset (frontend shows error message)
-            return queryset
-
-        # Latitude filters
-        if min_latitude:
-            try:
-                queryset = queryset.filter(latitude__gte=float(min_latitude))
-            except ValueError:
-                # If the latitude format is incorrect, return an empty queryset
-                return Earthquake.objects.none()
-
-        if max_latitude:
-            try:
-                queryset = queryset.filter(latitude__lte=float(max_latitude))
-            except ValueError:
-                # If the latitude format is incorrect, return an empty queryset
-                return Earthquake.objects.none()
-
-        # Longitude filters
-        if min_longitude:
-            try:
-                queryset = queryset.filter(longitude__gte=float(min_longitude))
-            except ValueError:
-                # If the longitude format is incorrect, return an empty queryset
-                return Earthquake.objects.none()
-
-        if max_longitude:
-            try:
-                queryset = queryset.filter(longitude__lte=float(max_longitude))
-            except ValueError:
-                # If the longitude format is incorrect, return an empty queryset
-                return Earthquake.objects.none()
-
-        # Depth filters
-        if min_depth:
-            try:
-                queryset = queryset.filter(depth__gte=float(min_depth))
-            except ValueError:
-                # If the depth format is incorrect, return an empty queryset
-                return Earthquake.objects.none()
-
-        if max_depth:
-            try:
-                queryset = queryset.filter(depth__lte=float(max_depth))
-            except ValueError:
-                # If the depth format is incorrect, return an empty queryset    
-                return Earthquake.objects.none()
-
-        # Magnitude filters
-        if min_magnitude:
-            try:
-                queryset = queryset.filter(magnitude__gte=float(min_magnitude))
-            except ValueError:
-                # If the magnitude format is incorrect, return an empty queryset
-                return Earthquake.objects.none()
-
-        if max_magnitude:
-            try:
-                queryset = queryset.filter(magnitude__lte=float(max_magnitude))
-            except ValueError:
-                # If the magnitude format is incorrect, return an empty queryset    
-                return Earthquake.objects.none()
-
-        return queryset
+        return apply_filters(queryset, params)
 
 #This gives you automatic support for:
   #  GET (list, detail) 
   #  POST (create)
   #  PUT/PATCH (update)
   #  DELETE
+
+class EarthquakeStatsView(APIView):
+    """
+    Returns earthquake statistics based on selected filters.
+    - Groups dynamically based on selected date range:
+        • > 365 days → per year
+        • 31–365 days → per month
+        • 2–30 days → per day
+        • 1 day → per hour
+    - If no results → returns { has_results: False }
+    """
+
+    def get(self, request):
+        queryset = Earthquake.objects.using("default").all()
+        params = request.GET
+
+        # Apply all filters (date + others)
+        filtered_qs = apply_filters(queryset, params)
+
+        if not filtered_qs.exists():
+            return Response({
+                "has_results": False,
+                "filtered_stats": {}
+            })
+
+        # Calculates the earliest and latest earthquake timestamps and computes the number of days between them.
+        date_range = filtered_qs.aggregate(min_time=Min("time"), max_time=Max("time"))
+        start_time, end_time = date_range["min_time"], date_range["max_time"]
+
+        if not start_time or not end_time:
+            return Response({
+                "has_results": False,
+                "filtered_stats": {}
+            })
+
+        days_range = (end_time - start_time).days
+
+        # Determines whether to group earthquakes by hour, day, month, or year based on the range of data
+        if start_time.date() == end_time.date():
+            label = "hour"
+            trunc_fn = TruncHour("time")
+        elif days_range > 365:
+            label = "year"
+            trunc_fn = TruncYear("time")
+        elif days_range > 30:
+            label = "month"
+            trunc_fn = TruncMonth("time")
+        else:
+            label = "day"
+            trunc_fn = TruncDay("time")
+
+        # Aggregate stats per period
+        per_period = (
+            filtered_qs.annotate(period=trunc_fn)
+            .values("period")
+            .annotate(
+                count=Count("id"),
+                avg_magnitude=Avg("magnitude"),
+                max_magnitude=Max("magnitude"),
+            )
+            .order_by("period")
+        )
+
+        # Format datetime labels for frontend
+        def format_datetime(data):
+            if label == "year":
+                return data.strftime("%Y")
+            elif label == "month":
+                return data.strftime("%Y-%m")
+            elif label == "day":
+                return data.strftime("%Y-%m-%d")
+            else:
+                return data.strftime("%Y-%m-%d %H:00")
+
+        # Prepare data for frontend
+        filtered_stats = {
+            "filtered_time_distribution_type": label,
+            "filtered_time_distribution": [
+                {
+                    "period": format_datetime(e["period"]),
+                    "count": e["count"],
+                    "avg_magnitude": round(e["avg_magnitude"], 2) if e["avg_magnitude"] else None,
+                    "max_magnitude": e["max_magnitude"],
+                }
+                for e in per_period
+            ],
+        }
+
+        '''
+        Returns JSON like this to the frontend:
+            {
+            "has_results": true,
+                "filtered_stats": {
+                    "filtered_time_distribution_type": "day",
+                    "filtered_time_distribution": [
+                    {"period": "2025-11-01", "count": 5, "avg_magnitude": 3.2, "max_magnitude": 4.1},
+                    ...
+                    ]
+                }
+            }
+        '''
+
+        return Response({
+            "has_results": True,
+            "filtered_stats": filtered_stats,
+        })
+    
+  

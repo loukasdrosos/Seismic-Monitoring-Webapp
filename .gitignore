@@ -2,19 +2,11 @@
 __pycache__/
 *.py[cod]
 *.pyo
-db.sqlite3
 *.log
 *.pot
 *.pyc
 *.pyd
 *.swp
-media/
-staticfiles/
-.env
-.env.*
-venv/
-ENV/
-env/
 *.egg-info/
 *.egg
 *.cover
@@ -31,17 +23,41 @@ coverage.xml
 */migrations/*.py[cod]
 */migrations/__pycache__/
 
+# SQLite (development database)
+db.sqlite3
+
+# Media & static files
+media/
+staticfiles/
+
+# Virtual environments
+venv/
+env/
+ENV/
+
 # Node.js
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 package-lock.json
 yarn.lock
 
-# VSCode
+# VSCode - Windows system files
 .vscode/
-
-# Windows system files
+.idea/
+.DS_Store
 Thumbs.db
 ehthumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment files
+.env
+.env.*
+!.env.example

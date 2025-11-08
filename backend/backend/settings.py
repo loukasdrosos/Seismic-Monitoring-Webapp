@@ -11,6 +11,16 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+import pymysql
+from dotenv import load_dotenv
+import warnings
+import logging
+
+# Load environment variables from .env file
+load_dotenv()
+
+logger = logging.getLogger(__name__)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,13 +30,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-c=i#=s*0*t=282cu=f!gc7-r*6&xw=(r-v#zv$4izz7ez!06s4'
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = []
-
+# Allowed hosts
+ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost').split(',')
 
 # Application definition
 
@@ -76,25 +86,84 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+'''
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'earthquakes',
-        'USER': 'adminEqDB',
-        'PASSWORD': 'EarthIsShaking599',
-        'HOST': 'localhost',
-        'PORT': '3306',
+        'ENGINE': os.getenv('MYSQL_DB_ENGINE'),
+        'NAME': os.getenv('MYSQL_DB_NAME'),
+        'USER': os.getenv('MYSQL_DB_USER'),
+        'PASSWORD': os.getenv('MYSQL_DB_PASSWORD'),
+        'HOST': os.getenv('MYSQL_DB_HOST', 'localhost'),
+        'PORT': os.getenv('MYSQL_DB_PORT', '3306'),
         'OPTIONS': {
             'charset': 'utf8mb4',
         },
     },
     'dbsqlite3': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'C:\\Users\\l.drosos\\Desktop\\LOUKAS\\PROJECTS\\Python\\Databases\\MASTERS\\db.sqlite3',
+        'NAME': os.getenv('SQLITE_PATH', BASE_DIR / 'db.sqlite3'),
     },
 }
+'''
 
+# Function to safely convert .env boolean values
+def str_to_bool(value):
+    return str(value).strip().lower() in ("true")
 
+# Try connecting to MySQL database
+def mysql_connection_available():
+    try:
+        conn = pymysql.connect(
+            host=os.getenv('MYSQL_DB_HOST', 'localhost'),
+            user=os.getenv('MYSQL_DB_USER'),
+            password=os.getenv('MYSQL_DB_PASSWORD'),
+            database=os.getenv('MYSQL_DB_NAME'),
+            port=int(os.getenv('MYSQL_DB_PORT', 3306)),
+            connect_timeout=3
+        )
+        conn.close()
+        return True
+    except Exception as e:
+        logger.warning("MySQL check failed: %s", e)
+        return False
+    
+# Decide database type
+use_sqlite = str_to_bool(os.getenv("USE_SQLITE3", False))
+
+# Databases setup
+if use_sqlite:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.getenv('SQLITE_PATH', BASE_DIR / 'db.sqlite3'),
+        }
+    }
+    warnings.warn("🔹 USE_SQLITE3=True → Using SQLite as default database.")
+else:
+    if mysql_connection_available():
+        DATABASES = {
+            'default': {
+                'ENGINE': os.getenv('MYSQL_DB_ENGINE', 'django.db.backends.mysql'),
+                'NAME': os.getenv('MYSQL_DB_NAME'),
+                'USER': os.getenv('MYSQL_DB_USER'),
+                'PASSWORD': os.getenv('MYSQL_DB_PASSWORD'),
+                'HOST': os.getenv('MYSQL_DB_HOST', 'localhost'),
+                'PORT': os.getenv('MYSQL_DB_PORT', '3306'),
+                'OPTIONS': {
+                    'charset': 'utf8mb4',
+                },
+            }
+        }
+        warnings.warn("✅ Connected to MySQL database.")
+    else:
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': os.getenv('SQLITE_PATH', BASE_DIR / 'db.sqlite3'),
+            }
+        }
+        warnings.warn("⚠️ MySQL unavailable — using SQLite fallback.")
+    
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
@@ -121,7 +190,7 @@ LANGUAGE_CODE = 'en-us'
 
 USE_TZ = True
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = os.getenv('DJANGO_TIME_ZONE', 'UTC')
 
 USE_I18N = True
 
@@ -135,7 +204,6 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # My frontend URL 
-]
+# CORS Configuration
 
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
