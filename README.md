@@ -56,8 +56,8 @@ This project supports automatic periodic data fetching from the remote XML feed 
 Open a terminal (Command Prompt / PowerShell / Git Bash) and run:
 
 ```bash
-git clone https://github.com/loukasdrosos/Seismic-Monitor.git
-cd Seismic-Monitor
+git clone https://github.com/loukasdrosos/Seismic-Monitoring-Webapp.git
+cd Seismic-Monitoring-Webapp
 ```
 
 ### 2. Set up a Python virtual environment (recommended)
