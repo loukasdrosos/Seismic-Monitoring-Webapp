@@ -1,4 +1,4 @@
-# Earthquake Monitoring Dashboard
+# Real-Time Seismic Activity Monitoring Web Application
 
 ## Overview
 
@@ -22,6 +22,7 @@ This project is a full-stack web application for monitoring and visualizing eart
 - Easy import of historical data from Excel files.
 
 ![Project Screenshot](assets/dashboard.png)
+
 ![Statistics Sidebar](assets/stats_sidebar.png)
 
 ---
