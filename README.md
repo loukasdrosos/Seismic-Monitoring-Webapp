@@ -59,30 +59,39 @@ Before running this project, make sure you have the following installed:
 ### 1. Python
 - **Version:** 3.10 or higher
 - Check if it's installed:
+
+  Open a command prompt window and run:
+
   ```bash
   python --version
   ```
 
-If not installed, download it from: https://www.python.org/downloads/
+If it is not installed, download it from: https://www.python.org/downloads/
 
 ### 2. Node.js
 - **Version:** 18 or higher
 - Check if it's installed:
+
+  Open a command prompt window and run:
+
   ```bash
   node --version
   npm --version
   ```
 
-If not installed, download it from: https://nodejs.org/
+If it is not installed, download it from: https://nodejs.org/
 
 ### 3. MySQL (Optional)
 - If you’re using MySQL instead of SQLite.
 - Check if it's installed:
+
+  Open a command prompt window and run:
+
   ```bash
   mysql --version
   ```
 
-If not installed, download it from: https://dev.mysql.com/downloads/workbench/
+If it is not installed, download it from: https://dev.mysql.com/downloads/workbench/
 
 ## Installation
 
@@ -120,10 +129,11 @@ Create a new database using Django in Step 6.
 
 ### 4. Install backend dependencies 
 
-Go to the backend directory and install the dependencies from requirements.txt
+In the cmd window navigate to the backend directory of this project and install the dependencies from requirements.txt.
+
+Run:
 
 ```bash
-cd backend
 pip install -r requirements.txt
 ```
 
@@ -361,7 +371,15 @@ Click OK to save, and enter your password if prompted.
 
 The Task Scheduler will now run your data-fetching script automatically at the specified intervals.
 
-### Web Application Installed
+---
+
+## ✅ Setup Complete
+
+Congratulations! 🎉  
+You now have the **Real-Time Seismic Activity Monitoring Web Application** fully installed and running.  
+You can explore real-time and historical earthquake activity through the interactive map, data table, and statistics dashboards.
+
+---
 
 ## License
 This project is licensed under the MIT License
