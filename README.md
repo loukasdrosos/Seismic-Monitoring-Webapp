@@ -2,12 +2,14 @@
 
 ## Overview
 
-This project is a full-stack web application for monitoring and visualizing earthquake data in Greece. It provides:
+This is a full-stack web application for real-time monitoring and visualization of earthquake activity in Greece.
+
+It provides:
 
 - **Real-time earthquake data** from a database.
 - **Interactive map** with clustered markers and heatmap visualization.
-- **Statistics sidebar** with charts for number of earthquakes, average magnitude, and maximum magnitude over time.
-- **Filtering** by date, latitude, longitude, depth, and magnitude.
+- **Dynamic statistics sidebar** with charts for number of earthquakes, average magnitude, and maximum magnitude over time.
+- **Advanced filtering** by date, latitude, longitude, depth, and magnitude.
 
 ---
 
@@ -27,7 +29,7 @@ This project is a full-stack web application for monitoring and visualizing eart
 - Heatmap layer for large datasets.
 - Dynamic statistics charts using Recharts.
 - Automatic data fetching with a task scheduler.
-- Supports SQLite or optional SQL database.
+- Supports SQLite or optional MySQL database.
 - Easy import of historical data from Excel files.
 
 ![Project Screenshot](assets/dashboard.png)
@@ -38,22 +40,55 @@ This project is a full-stack web application for monitoring and visualizing eart
 
 ## Abstract
 
-This project is part of my thesis for my Master's degree in Control and Computing at National and Kapodistrian University of Athens. This project is an integrated web application for monitoring and visualization of seismic data. The main objective of this work is the collection, processing and visualization of earthquakes recorded in real time in Greece.
+This project is part of my Master’s thesis in Control and Computing at the National and Kapodistrian University of Athens. It presents an integrated web application for real-time monitoring and visualization of seismic activity in Greece.
 
-The work combines backend and frontend technologies to create an integrated system, which allows the dynamic interaction of the user with geographic data through a modern, user-friendly website. The application collects seismic data in XML format from a public website of the Department of Geology and Geoenvironment of the National and Kapodistrian University of Athens. These data are processed and stored in the application's database, while through the implementation of a REST API using the Django REST Framework they are provided in an organized manner in the frontend of the application for viewing.
+The main objective is the automated collection, processing, and visualization of earthquake data recorded in real time. The application combines backend and frontend technologies to deliver a complete system that allows dynamic user interaction with geospatial data through a modern, user-friendly web interface.
 
-The frontend of the application was developed with React.js and the Leaflet library, which offers capabilities for displaying geospatial data on interactive maps. The user has the ability to display earthquakes of the last 24 hours or, using filters, search for seismic data for specific dates, geographic coordinates, seismic depths and seismic magnitudes. The application supports various visualization modes, such as clustering and heatmaps, allowing a better understanding of seismic activity over long periods of time.
-This application offers a user-friendly platform for both researchers and the general public to explore not only recent, but also the entire seismic activity in the history of Greece, and constitutes a solid foundation for the development of new functions, such as the addition of a real-time notification system, seismic activity predictions using machine learning models, as well as the integration of data from international seismic networks.
+Seismic data are retrieved in XML format from the public website of the Department of Geology and Geoenvironment of the National and Kapodistrian University of Athens. These data are processed and stored in the application’s database, while a REST API built with Django REST Framework exposes them to the frontend for interactive visualization.
 
-This project supports automatic periodic data fetching from the remote XML feed using a simple Windows batch script combined with Task Scheduler. The script runs a Django management command (fetch_earthquakes) at regular intervals, such as every hour, to keep the database up to date with the latest earthquake data.
+The frontend, developed with React.js and the Leaflet library, provides a rich map interface where users can view recent earthquakes (e.g., from the last 24 hours) or filter data by date range, coordinates, depth, and magnitude. Additional visualization options, such as clustering and heatmaps, enhance understanding of seismic trends over time.
+
+Overall, this application offers an accessible platform for both researchers and the public to explore the historical and real-time seismic activity of Greece. It also serves as a solid foundation for future extensions, such as real-time notifications, predictive modeling using machine learning, and integration with international seismic data networks.
 
 ---
+
+## Prerequisites
+
+Before running this project, make sure you have the following installed:
+
+### 1. Python
+- **Version:** 3.10 or higher
+- Check if it's installed:
+  ```bash
+  python --version
+  ```
+
+If not installed, download it from: https://www.python.org/downloads/
+
+### 2. Node.js
+- **Version:** 18 or higher
+- Check if it's installed:
+  ```bash
+  node --version
+  npm --version
+  ```
+
+If not installed, download it from: https://nodejs.org/
+
+### 3. MySQL (Optional)
+- If you’re using MySQL instead of SQLite.
+- Check if it's installed:
+  ```bash
+  mysql --version
+  ```
+
+If not installed, download it from: https://dev.mysql.com/downloads/workbench/
 
 ## Installation
 
 ### 1. Clone the repository
 
-Open a terminal (Command Prompt / PowerShell / Git Bash) and run:
+Download the project .zip file from Github and unzip it in your computer, or open a terminal (Command Prompt / PowerShell / Git Bash) and run:
 
 ```bash
 git clone https://github.com/loukasdrosos/Seismic-Monitoring-Webapp.git
@@ -75,17 +110,13 @@ venv\Scripts\activate      # Windows
 
 You can choose one of the following:
 
-**Option 1:** Create an mySQL database
+**Option 1:** MySQL database
 
-Install mySQL Workbench if you don't gave already and create a mySQL database for the project.
+Create a MySQL database for the project.
 
-**Option 2:** Create a new SQLite database
+**Option 2:** SQLite database
 
-Delete the current db.sqlite3 file in the backend\backend directory. Create a new database using Django in Step 6.
-
-**Option 3:** Use the included SQLite database
-
-The project contains a db.sqlite3 file filled with example data. Skip database creation and migrations (Step 6).
+Create a new database using Django in Step 6.
 
 ### 4. Install backend dependencies 
 
@@ -117,19 +148,19 @@ python -c "from django.core.management.utils import get_random_secret_key; print
 
 **DJANGO_DEBUG** - Set to "True" only when in development mode, during Production set to "False".
 
-**USE_SQLITE3** -  "True" if you are using an SQLite database, "False" if you are using a mySQL database.
+**USE_SQLITE3** -  "True" if you are using an SQLite database, "False" if you are using a MySQL database.
 
-**MYSQL_DB_ENGINE** - mySQL engine, don't change it.
+**MYSQL_DB_ENGINE** - MySQL engine, don't change it.
 
-**MYSQL_DB_NAME** - mySQL database name, necessary only if a mySQL database is used.
+**MYSQL_DB_NAME** - MySQL database name, necessary only if a MySQL database is used.
 
-**MYSQL_DB_USER** - mySQL username, necessary only if a mySQL database is used.
+**MYSQL_DB_USER** - MySQL username, necessary only if a MySQL database is used.
 
-**MYSQL_DB_PASSWORD** - mySQL password for user, necessary only if a mySQL database is used.
+**MYSQL_DB_PASSWORD** - MySQL password for user, necessary only if a MySQL database is used.
 
-**MYSQL_DB_HOST** - mySQL database host server, necessary only if a mySQL database is used.
+**MYSQL_DB_HOST** - MySQL database host server, necessary only if a MySQL database is used.
 
-**MYSQL_DB_PORT** - mySQL database port, necessary only if a mySQL database is used.
+**MYSQL_DB_PORT** - MySQL database port, necessary only if a MySQL database is used.
 
 **DATA_FETCH_URL** - Data source for automatic fetching of data. **WARNING**, changing feed may require change in parsing logic due to different XML/JSON structure.
 
@@ -158,17 +189,41 @@ python manage.py runserver
 
 The backend API should now be running at http://127.0.0.1:8000/.
 
+You can close the server by pressing *CTRL + C* in the cmd window.
+
 ![Django Server](assets/django_server.png)
 
-### 8. Import data from excel file (Optional)
+### 8. Import data 
 
-If you created a new database you can import some data from earthquakes in Greece to test the application.
+You can import data in the database in 2 ways: 
+
+#### 1. Automatic
+
+On the cmd window on the backend directory close the Django server and run the following command:
+
+```bash
+python manage.py fetch_earthquakes
+```
+
+This will automatically fetch and save in the database the earthquakes currently present in the source feed selected **DATA_FETCH_URL** in the .env file above.
+
+The source that is pre-configured is an XML feed for the latest earthquakes happening in Greece.
+
+In the final step of this project, you can create a scheduled task in Windows Task Scheduler to automatically fetch the latest data from the configured data source at your chosen time intervals.
+
+#### 2. Manually
+
+You can also insert data from an excel file, if you have older data or custom data you want to display.
 
 While on the project's backend directory run this command:
 
 ```bash
 python import_excel_data.py
 ```
+
+The project already contains a sample excel file in the backend\Excel_Data directory that contains a lot of data from earthquakes in Greece, but you can also create an excel file with your own data. 
+
+In order to import data from another excel file, you have to configure the path of the new excel file in **IMPORT_DATA_PATH** in the .env file above.
 
 Excel File Format
 
@@ -200,10 +255,9 @@ IMPORT_DATA_PATH=./Excel_Data/Greece_earthquakes_history.xlsx
 
 ### 9. Install frontend dependencies
 
-On a new terminal, navigate to the frontend directory and run:
+On a new terminal, open the virtual environment, then in the cmd window navigate to the frontend directory of this project and run:
 
 ```bash
-cd frontend
 npm install
 ```
 
@@ -245,6 +299,8 @@ npm run dev
 ```
 The app will be available at http://localhost:5173/ (default Vite port).
 
+You can close the server by pressing *CTRL + C* in the cmd window.
+
 ![Project Screenshot](assets/dashboard.png)
 
 ### 12. Configure .env for automatic data fetching
@@ -269,7 +325,7 @@ The log file will record the time and result of each fetch operation.
 
 ### 13. Set Up Automatic Execution (Windows Task Scheduler)
 
-You can make the "fetch_earthquakes.bat" script run automatically (for example, every hour) using Windows Task Scheduler.
+You can configure the **fetch_earthquakes.bat** script to run automatically (e.g., every hour) using **Windows Task Scheduler**, ensuring your database stays continuously up to date.
 
 **Steps:**
 
@@ -281,13 +337,13 @@ Under the General tab:
 
 Name it: Earthquake Data Fetch.
 
-Select Run whether user is logged on or not.
+When running the task, use the following user account: SYSTEM
 
 Check Run with highest privileges.
 
 Under the Triggers tab:
 
-Click New... → Choose Daily or Repeat task every 1 hour.
+Click New... → Choose Daily or Repeat task every 1 hour, or whenever you want the task to run.
 
 Set Start time as desired.
 
@@ -304,6 +360,8 @@ Program/script: C:\Path\to\fetch_earthquakes.bat
 Click OK to save, and enter your password if prompted.
 
 The Task Scheduler will now run your data-fetching script automatically at the specified intervals.
+
+### Web Application Installed
 
 ## License
 This project is licensed under the MIT License
